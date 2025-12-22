@@ -37,7 +37,6 @@
   "containerEnv": {
     "SSH_AUTH_SOCK": "/ssh-agent"
   },
-  "envFile": ".env",
 
 "postCreateCommand": "bash -c 'set -a && source .env && set +a && git config --global user.name \"$GIT_USER_NAME\" && git config --global user.email \"$GIT_USER_EMAIL\"'",
 "postStartCommand": "bash .devcontainer/start_jupyter.sh"
