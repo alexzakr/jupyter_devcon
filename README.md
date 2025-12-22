@@ -74,8 +74,8 @@ The container reads variables from a `.env` file located at the repository root.
 ### Required variables
 
 ```env
-GIT_USER_NAME=Your Name
-GIT_USER_EMAIL=your@email.com
+GIT_USER_NAME="Your Name"
+GIT_USER_EMAIL="your@email.com"
 ```
 
 ### Optional variables
