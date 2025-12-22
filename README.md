@@ -93,16 +93,15 @@ Notes:
 
 ## SSH and GitHub Access
 
-SSH access is implemented via **agent forwarding**:
+SSH access is implemented via a combination of SSH **agent forwarding** and a **read-only mount** of the host .ssh directory.
 
-- the host SSH agent socket is mounted into the container
-- `~/.ssh/config` and `known_hosts` are mounted read-only
-- private keys never leave the host
+This allows:
+- multiple GitHub accounts via SSH config
+- host aliases and Match rules
+- secure signing via the host SSH agent
 
-This setup supports:
-- multiple GitHub accounts
-- private repositories
-- secure, enterprise-grade workflows
+Private keys are not used directly by the container and remain managed by the host SSH agent.
+The .ssh directory is mounted read-only for configuration and host verification purposes.
 
 ---
 
