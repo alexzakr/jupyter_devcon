@@ -30,7 +30,7 @@
   "mounts": [
     "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
     "source=${env:SSH_AUTH_SOCK},target=/ssh-agent,type=bind",
-    "source=${env:HOME}/.ssh/config,target=/home/vscode/.ssh/config,type=bind,readonly",
+    "source=${env:HOME}/.ssh/,target=/home/vscode/.ssh/,type=bind,readonly",
     "source=${env:HOME}/.ssh/known_hosts,target=/home/vscode/.ssh/known_hosts,type=bind,readonly"
     ],
 
