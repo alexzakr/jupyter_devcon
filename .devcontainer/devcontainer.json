@@ -29,16 +29,14 @@
 
   "mounts": [
     "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
-    "source=${env:SSH_AUTH_SOCK},target=/ssh-agent,type=bind",
-    "source=${env:HOME}/.ssh/,target=/home/vscode/.ssh/,type=bind,readonly",
-    "source=${env:HOME}/.ssh/known_hosts,target=/home/vscode/.ssh/known_hosts,type=bind,readonly"
+    "source=${env:SSH_AUTH_SOCK},target=/ssh-agent,type=bind" //,
+    // "source=${env:HOME}/.ssh/known_hosts,target=/home/vscode/.ssh/known_hosts,type=bind,readonly"
     ],
 
   "containerEnv": {
     "SSH_AUTH_SOCK": "/ssh-agent"
   },
 
-"postCreateCommand": "bash -c 'set -a && source .env && set +a && git config --global user.name \"$GIT_USER_NAME\" && git config --global user.email \"$GIT_USER_EMAIL\"'",
-"postStartCommand": "bash .devcontainer/start_jupyter.sh"
+"postCreateCommand": "bash -c 'set -a && source .env && set +a && git config --global user.name \"$GIT_USER_NAME\" && git config --global user.email \"$GIT_USER_EMAIL\"'"
 
 }

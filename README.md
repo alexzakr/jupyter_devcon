@@ -1,202 +1,254 @@
-# Python + Jupyter DevContainer
+  # Python + Jupyter DevContainer
 
-## Overview
+  ## Overview
 
-This repository provides a **VS Code DevContainer** for Python development with **JupyterLab** as the primary runtime service.
+  This repository provides a **VS Code DevContainer** for Python development with support for **Jupyter Notebooks** via VS Code.
 
-The container is designed for:
-- data engineering and analytics work
-- exploratory analysis in Jupyter notebooks
-- reproducible local development
-- secure interaction with private Git repositories via SSH agent forwarding
+  The container is designed for:
+  - data engineering and analytics work
+  - exploratory analysis in Jupyter notebooks
+  - reproducible local development
+  - secure interaction with private Git repositories via SSH agent forwarding
 
-The container is **not** a production runtime image. It is a **development environment**, optimized for interactive work in VS Code.
+  The container is **not** a production runtime image. It is a **development environment**, optimized for interactive work in VS Code.
 
----
+  ---
 
-## Key Characteristics
+  ## Key Characteristics
 
-- Python 3.12 (official VS Code DevContainers base image)
-- JupyterLab started automatically on container start
-- VS Code Jupyter and Python extensions preinstalled
-- SSH agent forwarding (no private keys stored in container)
-- Git user configuration via environment variables
-- Non-root user (`vscode`)
-- Designed for future extension (Docker networks, docker-compose, Airflow/dbt sidecars)
+  - Python 3.12 (official VS Code DevContainers base image)
+  - Jupyter notebooks available with manual startup
+  - VS Code Jupyter and Python extensions preinstalled
+  - SSH agent forwarding (no private keys stored in container)
+  - Git user configuration via environment variables
+  - Non-root user (`vscode`)
+  - Designed for future extension (Docker networks, docker-compose, Airflow/dbt sidecars)
 
----
+  ---
 
-## Container Responsibilities
+  ## Container Responsibilities
 
-This DevContainer is responsible for:
-- providing a consistent Python environment
-- running JupyterLab as a background service
-- exposing Jupyter on a fixed internal port (`8888`)
-- integrating cleanly with VS Code port forwarding
+  This DevContainer is responsible for:
+  - providing a consistent Python environment
+  - supporting optional Jupyter notebook execution when explicitly started
+  - integrating cleanly with VS Code port forwarding
 
-It deliberately does **not**:
-- expose ports via `docker run -p`
-- manage external services (databases, message queues)
-- embed secrets or SSH private keys
+  It deliberately does **not**:
+  - expose ports via `docker run -p`
+  - manage external services (databases, message queues)
+  - embed secrets or SSH private keys
 
----
+  ---
 
-## Repository Structure
+  ## Repository Structure
 
-```text
-.devcontainer/
-├── devcontainer.json      # VS Code DevContainer configuration
-├── Dockerfile             # Container image definition
-├── start_jupyter.sh       # JupyterLab startup script
-.env.example               # Environment variables template
-requirements.txt           # Python dependencies (optional)
-```
+  ```text
+  .devcontainer/
+  ├── devcontainer.json      # VS Code DevContainer configuration
+  ├── Dockerfile             # Container image definition
+  ├── start_jupyter.sh       # Jupyter notebooks startup script
+  .env.example               # Environment variables template
+  requirements.txt           # Python dependencies (optional)
+  ```
 
----
+  ---
 
-## Prerequisites
+  ## Prerequisites
 
-On the host machine:
+  On the host machine:
 
-- Docker (recent version)
-- VS Code
-- VS Code extensions:
-  - Remote Development (Dev Containers)
-- SSH agent running on the host
-- GitHub SSH keys loaded into the agent (`ssh-add -l`)
+  - Docker (recent version)
+  - VS Code
+  - VS Code extensions:
+    - Remote Development (Dev Containers)
+  - SSH agent running on the host
+  - GitHub SSH keys loaded into the agent (`ssh-add -l`)
 
----
+  ---
 
-## Environment Variables
+  ## Environment Variables
 
-The container reads variables from a `.env` file located at the repository root.
+  The container reads variables from a `.env` file located at the repository root.
 
-### Required variables
+  ### Required variables
 
-```env
-GIT_USER_NAME="Your Name"
-GIT_USER_EMAIL="your@email.com"
-```
+  ```env
+  GIT_USER_NAME="Your Name"
+  GIT_USER_EMAIL="your@email.com"
+  ```
 
-### Optional variables
+  ### Optional variables
 
-```env
-JUPYTER_PORT=8888
-JUPYTER_TOKEN=dev
-```
+  ```env
+  JUPYTER_PORT=8888
+  JUPYTER_TOKEN=dev
+  ```
 
-Notes:
-- `.env` should **not** be committed
-- use `.env.example` as a template
+  Notes:
+  - `.env` should **not** be committed
+  - use `.env.example` as a template
 
----
+  ---
 
-## SSH and GitHub Access
+  ## SSH and GitHub Access
 
-SSH access is implemented via a combination of SSH **agent forwarding** and a **read-only mount** of the host .ssh directory.
+  SSH access is implemented using **SSH agent forwarding only**.
 
-This allows:
-- multiple GitHub accounts via SSH config
-- host aliases and Match rules
-- secure signing via the host SSH agent
+  Key principles:
 
-Private keys are not used directly by the container and remain managed by the host SSH agent.
-The .ssh directory is mounted read-only for configuration and host verification purposes.
+  - private SSH keys are managed **exclusively on the host**
+  - the container never mounts or stores SSH private keys
+  - the container interacts only with the forwarded SSH agent socket
 
----
+  ### Multi-account GitHub workflow (host-driven)
 
-## JupyterLab Behavior
+  Switching between multiple GitHub accounts is handled **on the host**, before starting VS Code or the DevContainer.
 
-- JupyterLab is started automatically on container start
-- listens on `0.0.0.0:${JUPYTER_PORT}` (default: 8888)
-- logs are written to:
+  The container itself remains unchanged and always relies on the SSH agent.
 
-```text
-/workspace/.jupyter-runtime/jupyter.log
-```
+  #### Bash aliases (host side)
 
-Port access is handled by **VS Code port forwarding**, not Docker port publishing.
+  Add the following aliases to `~/.bashrc` (or equivalent shell config):
 
----
+  ```bash
+  # Switch SSH key for first GitHub account
+  alias ssh_git_first='ssh-add -D >/dev/null 2>&1 && ssh-add ~/.ssh/ed25519_git_first_key'
 
-## How to Use
+  # Switch SSH key for second GitHub account
+  alias ssh_git_second='ssh-add -D >/dev/null 2>&1 && ssh-add ~/.ssh/ed25519_git_second_key'
+  ```
 
-### 1. Prepare environment
+  Reload shell configuration:
 
-```bash
-cp .env.example .env
-# edit .env with your values
-```
+  ```bash
+  source ~/.bashrc
+  ```
 
-Ensure your SSH agent is running and has the correct keys loaded:
+  Usage workflow:
 
-```bash
-ssh-add -l
-```
+  ```bash
+  # Select the desired GitHub identity
+  ssh_git_first   # or ssh_git_second
 
----
+  # Start VS Code / Docker / DevContainer
+  code .
+  ```
 
-### 2. Open in DevContainer
+  This approach ensures:
+  - clean separation of responsibilities (host vs container)
+  - no SSH key material inside containers
+  - predictable GitHub identity selection
+  - compatibility with CI and ephemeral containers
 
-From VS Code:
+  ---
 
-1. Open the repository
-2. `Cmd/Ctrl + Shift + P`
-3. `Dev Containers: Reopen in Container`
+  ## Jupyter Notebook Behavior
 
-The container will build and start automatically.
+  A standalone Jupyter Notebook server is not started automatically.
 
----
+  This allows two equally supported workflows:
 
-### 3. Access Jupyter
+  - working purely in Python (scripts, REPL, tests)
+  - running Jupyter Notebook only when it is explicitly needed
 
-After startup:
+  ### Manual Jupyter startup
 
-- Open the **Ports** tab in VS Code
-- Port `8888` will be forwarded automatically
-- Use "Open in Browser" or VS Code Jupyter integration
+  From inside the container:
 
----
+  ```bash
+  bash .devcontainer/start_jupyter.sh
+  ```
 
-## Extensibility Notes
+  - listens on `0.0.0.0:${JUPYTER_PORT}` (default: 8888)
+  - logs are written to:
 
-This DevContainer is intentionally designed to be extended:
+  ```text
+  /workspace/.jupyter-runtime/jupyter.log
+  ```
 
-- add `docker-compose.yml` for additional services
-- attach databases or message brokers via Docker networks
-- reuse the image in CI pipelines
-- run Jupyter as a sidecar in larger development stacks
+  Port access is handled by **VS Code port forwarding**, not Docker port publishing.
 
-No assumptions are baked in that would block future growth.
+  ---
 
----
+  ## How to Use
 
-## License
+  ### 1. Prepare environment
 
-This project is released under the **MIT License**.
+  ```bash
+  cp .env.example .env
+  # edit .env with your values
+  ```
 
-Copyright (c) 2025 Aleksy Zakrzewski
+  Ensure your SSH agent is running and has the correct keys loaded:
 
-You are free to:
-- use
-- copy
-- modify
-- merge
-- publish
-- distribute
-- sublicense
+  ```bash
+  ssh-add -l
+  ```
 
-With no warranty and no restrictions beyond attribution.
+  ---
 
----
+  ### 2. Open in DevContainer
 
-## Possible Future Additions (Please Confirm)
+  From VS Code:
 
-The following sections can be added if you find them useful:
+  1. Open the repository
+  2. `Cmd/Ctrl + Shift + P`
+  3. `Dev Containers: Reopen in Container`
 
-- Architecture diagram (DevContainer + future services)
-- Security model (SSH, secrets, isolation)
-- Recommended VS Code settings
-- Docker Compose integration guide
-- CI usage example
+  The container will build and start automatically.
 
+  ---
+
+### 3. Working with Jupyter Notebooks
+
+In this DevContainer, Jupyter is intended to be used **through VS Code**, not via a browser on the host.
+
+To create and work with a Jupyter notebook:
+
+1. Press `Ctrl + Shift + P` (or `Cmd + Shift + P` on macOS)
+2. Select **`Jupyter: Create New Jupyter Notebook`**
+3. Choose the Python kernel from the DevContainer environment
+
+Notebooks will open and run **directly inside VS Code** using the Jupyter extension.
+
+#### Important notes
+
+- Jupyter is **not exposed to the host browser**
+- There is no supported workflow to access Jupyter via `http://localhost:8888`
+- All notebook interaction is expected to happen inside VS Code
+
+This design keeps the DevContainer:
+- simple and predictable
+- aligned with VS Code workflows
+- free from unnecessary port exposure
+
+
+  ## Extensibility Notes
+
+  This DevContainer is intentionally designed to be extended:
+
+  - add `docker-compose.yml` for additional services
+  - attach databases or message brokers via Docker networks
+  - reuse the image in CI pipelines
+  - run Jupyter as a sidecar in larger development stacks
+
+  No assumptions are baked in that would block future growth.
+
+  ---
+
+  ## License
+
+  This project is released under the **MIT License**.
+
+  Copyright (c) 2025 Aleksy Zakrzewski
+
+  You are free to:
+  - use
+  - copy
+  - modify
+  - merge
+  - publish
+  - distribute
+  - sublicense
+
+  With no warranty and no restrictions beyond attribution.
