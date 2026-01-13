@@ -47,6 +47,7 @@
   ├── devcontainer.json      # VS Code DevContainer configuration
   ├── Dockerfile             # Container image definition
   ├── start_jupyter.sh       # Jupyter notebooks startup script
+
   .env.example               # Environment variables template
   requirements.txt           # Python dependencies (optional)
   ```
@@ -99,6 +100,10 @@
   - private SSH keys are managed **exclusively on the host**
   - the container never mounts or stores SSH private keys
   - the container interacts only with the forwarded SSH agent socket
+
+  ### macOS note
+  On macOS, SSH agent forwarding may fail with mount config is invalid if SSH_AUTH_SOCK is not available at container startup.
+  A recommended fix using localEnv is documented here: [docs/macos-ssh-agent.md]
 
   ### Multi-account GitHub workflow (host-driven)
 
