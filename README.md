@@ -47,7 +47,8 @@
   ├── devcontainer.json      # VS Code DevContainer configuration
   ├── Dockerfile             # Container image definition
   ├── start_jupyter.sh       # Jupyter notebooks startup script
-
+  docs/                     
+  ├── macos_ssh_agent.md     # macOS: SSH Agent Forwarding in DevContainer
   .env.example               # Environment variables template
   requirements.txt           # Python dependencies (optional)
   ```
